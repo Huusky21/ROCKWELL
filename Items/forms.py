@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Registro, SOItem
+from .models import Accesorio, Huacal, Registro, SOItem
 
 
 class SOItemComboboxField(forms.ModelChoiceField):
@@ -24,6 +24,24 @@ class SOItemComboboxField(forms.ModelChoiceField):
                 raise forms.ValidationError(self.error_messages['invalid_choice'], code='invalid_choice')
 
 
+class HuacalSelectField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        tipo = obj.get_tipo_display().rstrip('s')
+        desc = f' — {obj.descripcion}' if obj.descripcion else ''
+        return f'{obj.pn} ({tipo}){desc}'
+
+
+class AccesorioAutoCreateField(forms.CharField):
+    def to_python(self, value):
+        if not value:
+            return None
+        codigo = str(value).strip()
+        if not codigo:
+            return None
+        accesorio, _ = Accesorio.objects.get_or_create(codigo=codigo)
+        return accesorio
+
+
 class RegistroForm(forms.ModelForm):
     so_item = SOItemComboboxField(
         queryset=SOItem.objects.all(),
@@ -41,3 +59,22 @@ class RegistroForm(forms.ModelForm):
         widgets = {
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }
+
+
+class CapturarForm(RegistroForm):
+    huacal = HuacalSelectField(
+        queryset=Huacal.objects.filter(activo=True).order_by('tipo', 'pn'),
+        required=False,
+        empty_label='— Sin huacal —',
+    )
+    accesorio = AccesorioAutoCreateField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'list': 'accesorios',
+            'autocomplete': 'off',
+            'placeholder': 'Código del accesorio (se crea si no existe)',
+        }),
+    )
+
+    class Meta(RegistroForm.Meta):
+        fields = ['so_item', 'cantidad']

@@ -25,11 +25,28 @@
             <option value="{{ item }}"></option>
           {% endfor %}
         </datalist>
-        <div class="hint-text">Selecciona uno existente o escribe un SO Item nuevo.</div>
+        <div class="hint-text">Selecciona uno existente del catálogo.</div>
       </div>
       <div class="field">
         <label for="{{ form.cantidad.id_for_label }}">Cantidad</label>
         {{ form.cantidad }}
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="{{ form.huacal.id_for_label }}">Huacal usado</label>
+        {{ form.huacal }}
+        <div class="hint-text">Pallet o crate al que se asignó este item. Opcional.</div>
+      </div>
+      <div class="field">
+        <label for="{{ form.accesorio.id_for_label }}">Accesorio</label>
+        {{ form.accesorio }}
+        <datalist id="accesorios">
+          {% for a in accesorios %}
+            <option value="{{ a.codigo }}"></option>
+          {% endfor %}
+        </datalist>
+        <div class="hint-text">Si no existe, se crea automáticamente al guardar.</div>
       </div>
     </div>
     <div class="form-actions">

@@ -36,12 +36,14 @@
     <span class="hint">Ordenado de más reciente a más antiguo.</span>
   </div>
   {% if entradas %}
-    <div class="table-wrap" style="border:none; box-shadow:none">
+    <div class="table-wrap scroll-x" style="border:none; box-shadow:none">
       <table class="data">
         <thead>
           <tr>
             <th>Fecha y hora</th>
             <th class="num">Cantidad</th>
+            <th>Huacal usado</th>
+            <th>Accesorio</th>
             <th>Usuario</th>
           </tr>
         </thead>
@@ -50,6 +52,21 @@
             <tr>
               <td>{{ entrada.creado|date:"d/m/Y H:i:s" }}</td>
               <td class="num">+{{ entrada.cantidad }}</td>
+              <td>
+                {% if entrada.huacal %}
+                  <strong>{{ entrada.huacal.pn }}</strong>
+                  <span class="muted">· {{ entrada.huacal.get_tipo_display }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if entrada.accesorio %}
+                  {{ entrada.accesorio.codigo }}
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
               <td>{{ entrada.usuario.username|default:"Anónimo" }}</td>
             </tr>
           {% endfor %}

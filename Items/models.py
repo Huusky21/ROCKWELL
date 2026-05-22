@@ -46,6 +46,20 @@ class Registro(models.Model):
 class Entrada(models.Model):
     registro = models.ForeignKey(Registro, on_delete=models.CASCADE, related_name='entradas')
     cantidad = models.PositiveIntegerField()
+    huacal = models.ForeignKey(
+        'Huacal',
+        on_delete=models.SET_NULL,
+        related_name='entradas',
+        blank=True,
+        null=True,
+    )
+    accesorio = models.ForeignKey(
+        Accesorio,
+        on_delete=models.SET_NULL,
+        related_name='entradas',
+        blank=True,
+        null=True,
+    )
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     creado = models.DateTimeField(auto_now_add=True)
 

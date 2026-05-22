@@ -10,8 +10,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 import openpyxl
 from openpyxl.utils import get_column_letter
 
-from .forms import RegistroForm
+from .forms import CapturarForm, RegistroForm
 from .models import (
+    Accesorio,
     ConteoHuacal,
     DestinatarioAlertaHuacal,
     Entrada,
@@ -72,29 +73,54 @@ def registros_listado(request):
 
 def capturar(request):
     if request.method == 'POST':
-        form = RegistroForm(request.POST)
+        form = CapturarForm(request.POST)
         if form.is_valid():
             so_item = form.cleaned_data['so_item']
             cantidad = form.cleaned_data['cantidad']
+            huacal = form.cleaned_data.get('huacal')
+            accesorio = form.cleaned_data.get('accesorio')
             usuario = request.user if request.user.is_authenticated else None
             registro = Registro.objects.filter(so_item=so_item).order_by('-creado').first()
             if registro:
                 registro.cantidad += cantidad
+                if accesorio:
+                    registro.accesorio = accesorio
                 registro.save()
-                Entrada.objects.create(registro=registro, cantidad=cantidad, usuario=usuario)
+                Entrada.objects.create(
+                    registro=registro,
+                    cantidad=cantidad,
+                    huacal=huacal,
+                    accesorio=accesorio,
+                    usuario=usuario,
+                )
                 messages.success(request, f'Se sumó {cantidad} al registro existente de {so_item}.')
             else:
                 nuevo_registro = form.save(commit=False)
                 nuevo_registro.usuario = usuario
+                if accesorio:
+                    nuevo_registro.accesorio = accesorio
                 nuevo_registro.save()
-                Entrada.objects.create(registro=nuevo_registro, cantidad=cantidad, usuario=usuario)
+                Entrada.objects.create(
+                    registro=nuevo_registro,
+                    cantidad=cantidad,
+                    huacal=huacal,
+                    accesorio=accesorio,
+                    usuario=usuario,
+                )
                 messages.success(request, 'Captura guardada correctamente.')
             return redirect('registros_listado')
     else:
-        form = RegistroForm()
+        form = CapturarForm()
 
-    so_items = SOItem.objects.all()
-    return render(request, 'Items/capturar.html', {'form': form, 'so_items': so_items})
+    return render(
+        request,
+        'Items/capturar.html',
+        {
+            'form': form,
+            'so_items': SOItem.objects.all(),
+            'accesorios': Accesorio.objects.all(),
+        },
+    )
 
 
 def export_excel(request):

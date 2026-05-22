@@ -1,0 +1,120 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Base de datos de consultas · Rockwell{% endblock %}
+
+{% block extra_style %}
+  .filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto auto;
+    gap: .75rem;
+    align-items: end;
+  }
+  @media (max-width: 720px) {
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .row-actions { display: flex; gap: .35rem; flex-wrap: nowrap; }
+  td.cell-id { color: var(--color-text-muted); font-variant-numeric: tabular-nums; font-size: .85rem; }
+  td.so-cell { font-weight: 700; }
+  td.user-cell { color: var(--color-text-muted); font-size: .85rem; }
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Base de datos de consultas</h1>
+    <p class="subtitle">CRUD de capturas por SO Item · {{ mostrando }} de {{ total }} mostrados.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'capturar' %}" class="btn btn-primary">+ Nueva captura</a>
+    <a href="{% url 'export_excel' %}{% if q or desde or hasta %}?q={{ q|urlencode }}&desde={{ desde }}&hasta={{ hasta }}{% endif %}" class="btn btn-secondary">Exportar Excel</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Capturas (filtradas)</div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-foot">Mostrando {{ mostrando }} más recientes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Cantidad acumulada</div>
+    <div class="stat-value">{{ cantidad_total }}</div>
+    <div class="stat-foot">Suma de la página actual</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">SO Items en catálogo</div>
+    <div class="stat-value">{{ so_items_count }}</div>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Filtros</h2>
+    <span class="hint">Por SO Item / material y por rango de fechas.</span>
+  </div>
+  <form method="get">
+    <div class="filters-grid">
+      <div class="field" style="margin:0">
+        <label for="q">Búsqueda</label>
+        <input type="text" name="q" id="q" value="{{ q }}" placeholder="SO Item, material...">
+      </div>
+      <div class="field" style="margin:0">
+        <label for="desde">Desde</label>
+        <input type="date" name="desde" id="desde" value="{{ desde }}">
+      </div>
+      <div class="field" style="margin:0">
+        <label for="hasta">Hasta</label>
+        <input type="date" name="hasta" id="hasta" value="{{ hasta }}">
+      </div>
+      <button type="submit" class="btn btn-primary">Aplicar</button>
+      <a href="{% url 'registros_listado' %}" class="btn btn-ghost">Limpiar</a>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Capturas recientes</h2>
+    <span class="hint">Límite por página: {{ por_pagina }}</span>
+  </div>
+  <div class="table-wrap scroll-x" style="border:none; box-shadow:none">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>SO Item</th>
+          <th class="num">Cantidad</th>
+          <th>Usuario</th>
+          <th>Fecha y hora</th>
+          <th style="width:1%">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in registros %}
+          <tr>
+            <td class="cell-id">#{{ r.id }}</td>
+            <td class="so-cell">{{ r.so_item }}</td>
+            <td class="num">{{ r.cantidad }}</td>
+            <td class="user-cell">{{ r.usuario.username|default:"Anónimo" }}</td>
+            <td>{{ r.creado|date:"d/m/Y H:i" }}</td>
+            <td>
+              <div class="row-actions">
+                <a href="{% url 'registro_detalle' r.pk %}" class="btn btn-secondary btn-sm">Ver</a>
+                <a href="{% url 'editar_registro' r.pk %}" class="btn btn-ghost btn-sm">Editar</a>
+                <a href="{% url 'registro_eliminar' r.pk %}" class="btn btn-ghost btn-sm" style="color:var(--color-danger)">Eliminar</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="empty-state">No hay capturas que coincidan con los filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total > mostrando %}
+    <p class="hint-text" style="margin-top:.85rem">
+      Mostrando los {{ mostrando }} más recientes de {{ total }}. Refina la búsqueda o el rango de fechas para acotar.
+    </p>
+  {% endif %}
+</section>
+{% endblock %}

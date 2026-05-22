@@ -1,0 +1,108 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Alertas de huacales · Rockwell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Alertas de huacales</h1>
+    <p class="subtitle">Destinatarios y plantilla del correo que se envía cuando algún huacal llega a 0.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'huacales_inventario' %}" class="btn btn-secondary">Ver inventario</a>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Agregar destinatario</h2>
+    <span class="hint">Recibirán el correo automático cuando se detecte un huacal en 0.</span>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="agregar_destinatario">
+    <div class="field-row">
+      <div class="field">
+        <label for="email">Correo</label>
+        <input type="email" name="email" id="email" required placeholder="responsable@empresa.com">
+      </div>
+      <div class="field">
+        <label for="nombre">Nombre (opcional)</label>
+        <input type="text" name="nombre" id="nombre" placeholder="Nombre del responsable">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Agregar destinatario</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Destinatarios actuales</h2>
+    <span class="hint">{{ destinatarios|length }} registrado{{ destinatarios|length|pluralize }}</span>
+  </div>
+  {% if destinatarios %}
+    <div class="table-wrap" style="border:none; box-shadow:none">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Correo</th>
+            <th>Nombre</th>
+            <th>Estado</th>
+            <th style="width:1%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in destinatarios %}
+            <tr>
+              <td><strong>{{ d.email }}</strong></td>
+              <td>{{ d.nombre|default:"—" }}</td>
+              <td>
+                {% if d.activo %}
+                  <span class="tag success">Activo</span>
+                {% else %}
+                  <span class="tag warning">Inactivo</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" style="margin:0">
+                  {% csrf_token %}
+                  <input type="hidden" name="accion" value="eliminar_destinatario">
+                  <input type="hidden" name="pk" value="{{ d.pk }}">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar a {{ d.email }}?')">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">Aún no hay destinatarios. Agrega al menos uno para recibir alertas.</div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Mensaje predefinido</h2>
+    <span class="hint">El cuerpo se complementará con el listado de huacales en 0 y la fecha.</span>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="guardar_mensaje">
+    <div class="field">
+      <label for="asunto">Asunto</label>
+      <input type="text" name="asunto" id="asunto" value="{{ mensaje.asunto }}" required>
+    </div>
+    <div class="field">
+      <label for="cuerpo">Cuerpo del correo</label>
+      <textarea name="cuerpo" id="cuerpo">{{ mensaje.cuerpo }}</textarea>
+      <div class="hint-text">Al final del cuerpo se anexará automáticamente la fecha y el listado de PNs en 0.</div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar mensaje</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

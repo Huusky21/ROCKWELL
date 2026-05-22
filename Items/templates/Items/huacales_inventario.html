@@ -1,0 +1,167 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Inventario de huacales · Rockwell{% endblock %}
+
+{% block extra_style %}
+  .filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto auto;
+    gap: .75rem;
+    align-items: end;
+  }
+  @media (max-width: 720px) {
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .row-actions { display: flex; gap: .35rem; flex-wrap: nowrap; }
+  td.pn-cell { font-weight: 700; }
+  td.last-count {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  td.last-count .qty {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  td.last-count.zero .qty { color: var(--color-danger); }
+  td.last-count .date {
+    color: var(--color-text-muted);
+    font-size: .8rem;
+  }
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Inventario de huacales</h1>
+    <p class="subtitle">Concentrado de pallets y crates de la planta. Filtra, edita y captura conteos.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'huacal_crear' %}" class="btn btn-primary">+ Nuevo huacal</a>
+    <a href="{% url 'huacales_alertas' %}" class="btn btn-secondary">Alertas</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total activos</div>
+    <div class="stat-value">{{ stats.total }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pallets</div>
+    <div class="stat-value">{{ stats.pallets }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Crates</div>
+    <div class="stat-value">{{ stats.crates }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Fechas capturadas</div>
+    <div class="stat-value">{{ stats.fechas }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">En 0 (último conteo)</div>
+    <div class="stat-value" {% if stats.en_cero %}style="color:var(--color-danger)"{% endif %}>{{ stats.en_cero }}</div>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Filtros</h2>
+    <span class="hint">Busca por PN o descripción, filtra por tipo y estado.</span>
+  </div>
+  <form method="get">
+    <div class="filters-grid">
+      <div class="field" style="margin:0">
+        <label for="q">Búsqueda</label>
+        <input type="text" name="q" id="q" value="{{ q }}" placeholder="PN, descripción...">
+      </div>
+      <div class="field" style="margin:0">
+        <label for="tipo">Tipo</label>
+        <select name="tipo" id="tipo">
+          <option value="">Todos</option>
+          {% for value, label in tipo_choices %}
+            <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field" style="margin:0">
+        <label for="estado">Estado</label>
+        <select name="estado" id="estado">
+          <option value="activos" {% if estado == 'activos' %}selected{% endif %}>Activos</option>
+          <option value="inactivos" {% if estado == 'inactivos' %}selected{% endif %}>Inactivos</option>
+          <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Aplicar</button>
+      <a href="{% url 'huacales_inventario' %}" class="btn btn-ghost">Limpiar</a>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Listado de huacales</h2>
+    <span class="hint">{{ filas|length }} resultado{{ filas|length|pluralize }}</span>
+  </div>
+  <div class="table-wrap scroll-x" style="border:none; box-shadow:none">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>PN</th>
+          <th>Descripción</th>
+          <th>Medidas</th>
+          <th>Tipo</th>
+          <th class="num">Consumo sem.</th>
+          <th>Último conteo</th>
+          <th>Estado</th>
+          <th style="width:1%">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+          <tr>
+            <td class="pn-cell">{{ fila.huacal.pn }}</td>
+            <td>{{ fila.huacal.descripcion|default:"—" }}</td>
+            <td>{{ fila.huacal.medidas|default:"—" }}</td>
+            <td>
+              {% if fila.huacal.tipo == 'pallet' %}
+                <span class="tag info">Pallet</span>
+              {% else %}
+                <span class="tag warning">Crate</span>
+              {% endif %}
+            </td>
+            <td class="num">{{ fila.huacal.consumo_semanal }}</td>
+            <td>
+              {% if fila.ultimo %}
+                <span class="last-count {% if fila.ultimo.cantidad == 0 %}zero{% endif %}">
+                  <span class="qty">{{ fila.ultimo.cantidad }}</span>
+                  <span class="date">{{ fila.ultimo.fecha|date:"d/m/Y" }}</span>
+                </span>
+              {% else %}
+                <span class="muted">Sin conteos</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if fila.huacal.activo %}
+                <span class="tag success">Activo</span>
+              {% else %}
+                <span class="tag warning">Inactivo</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="row-actions">
+                <a href="{% url 'huacal_detalle' fila.huacal.pk %}" class="btn btn-secondary btn-sm">Ver</a>
+                <a href="{% url 'huacal_editar' fila.huacal.pk %}" class="btn btn-ghost btn-sm">Editar</a>
+                <a href="{% url 'huacal_eliminar' fila.huacal.pk %}" class="btn btn-ghost btn-sm" style="color:var(--color-danger)">Eliminar</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="empty-state">No hay huacales que coincidan con los filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

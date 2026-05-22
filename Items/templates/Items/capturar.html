@@ -1,0 +1,41 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Nueva captura · Rockwell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Nueva captura</h1>
+    <p class="subtitle">Si el SO Item ya existe, la cantidad se suma a su registro y se añade al historial.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'registros_listado' %}" class="btn btn-ghost">← Volver al listado</a>
+  </div>
+</div>
+
+<section class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="field-row">
+      <div class="field">
+        <label for="{{ form.so_item.id_for_label }}">SO Item</label>
+        {{ form.so_item }}
+        <datalist id="so_items">
+          {% for item in so_items %}
+            <option value="{{ item }}"></option>
+          {% endfor %}
+        </datalist>
+        <div class="hint-text">Selecciona uno existente o escribe un SO Item nuevo.</div>
+      </div>
+      <div class="field">
+        <label for="{{ form.cantidad.id_for_label }}">Cantidad</label>
+        {{ form.cantidad }}
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar captura</button>
+      <a href="{% url 'registros_listado' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

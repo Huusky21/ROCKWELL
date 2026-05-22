@@ -1,0 +1,72 @@
+{% extends "Items/base.html" %}
+
+{% block title %}
+  {% if modo == 'crear' %}Nuevo huacal{% else %}Editar {{ huacal.pn }}{% endif %} · Rockwell
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if modo == 'crear' %}Nuevo huacal{% else %}Editar huacal{% endif %}</h1>
+    <p class="subtitle">
+      {% if modo == 'crear' %}
+        Agrega un nuevo PN al inventario.
+      {% else %}
+        Modifica los datos de <strong>{{ huacal.pn }}</strong>.
+      {% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'huacales_inventario' %}" class="btn btn-ghost">← Cancelar</a>
+  </div>
+</div>
+
+<section class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="field-row">
+      <div class="field">
+        <label for="pn">PN <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" name="pn" id="pn" required value="{{ huacal.pn|default:'' }}" placeholder="PN-XXXXX">
+      </div>
+      <div class="field">
+        <label for="tipo">Tipo</label>
+        <select name="tipo" id="tipo">
+          {% for value, label in tipo_choices %}
+            <option value="{{ value }}" {% if huacal and huacal.tipo == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="descripcion">Descripción</label>
+      <input type="text" name="descripcion" id="descripcion" value="{{ huacal.descripcion|default:'' }}" placeholder="Tarima 5CLs, MCC, etc.">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="medidas">Medidas</label>
+        <input type="text" name="medidas" id="medidas" value="{{ huacal.medidas|default:'' }}" placeholder='48x48"'>
+      </div>
+      <div class="field">
+        <label for="consumo_semanal">Consumo semanal</label>
+        <input type="number" name="consumo_semanal" id="consumo_semanal" min="0" value="{{ huacal.consumo_semanal|default:0 }}">
+      </div>
+    </div>
+    {% if modo == 'editar' %}
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer; font-weight:600;">
+          <input type="checkbox" name="activo" {% if huacal.activo %}checked{% endif %} style="width:auto">
+          Huacal activo
+        </label>
+        <div class="hint-text">Los inactivos no aparecen por defecto en el listado.</div>
+      </div>
+    {% endif %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if modo == 'crear' %}Crear huacal{% else %}Guardar cambios{% endif %}
+      </button>
+      <a href="{% url 'huacales_inventario' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

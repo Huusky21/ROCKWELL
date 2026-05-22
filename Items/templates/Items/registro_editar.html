@@ -1,0 +1,40 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Editar registro · Rockwell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Editar registro</h1>
+    <p class="subtitle">Modifica el SO Item o ajusta la cantidad acumulada.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'registros_listado' %}" class="btn btn-ghost">← Volver al listado</a>
+  </div>
+</div>
+
+<section class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="field-row">
+      <div class="field">
+        <label for="{{ form.so_item.id_for_label }}">SO Item</label>
+        {{ form.so_item }}
+        <datalist id="so_items">
+          {% for item in form.fields.so_item.queryset %}
+            <option value="{{ item }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+      <div class="field">
+        <label for="{{ form.cantidad.id_for_label }}">Cantidad</label>
+        {{ form.cantidad }}
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar cambios</button>
+      <a href="{% url 'registros_listado' %}" class="btn btn-secondary">Volver al listado</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "Items/base.html" %}
+
+{% block title %}{{ huacal.pn }} · Inventario de huacales{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ huacal.pn }}</h1>
+    <p class="subtitle">
+      {% if huacal.tipo == 'pallet' %}
+        <span class="tag info">Pallet</span>
+      {% else %}
+        <span class="tag warning">Crate</span>
+      {% endif %}
+      {% if huacal.activo %}
+        <span class="tag success">Activo</span>
+      {% else %}
+        <span class="tag warning">Inactivo</span>
+      {% endif %}
+      <span class="muted" style="margin-left:.4rem">{{ huacal.descripcion|default:"Sin descripción" }}</span>
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'huacal_editar' huacal.pk %}" class="btn btn-secondary">Editar</a>
+    <a href="{% url 'huacal_eliminar' huacal.pk %}" class="btn btn-ghost" style="color:var(--color-danger)">Eliminar</a>
+    <a href="{% url 'huacales_inventario' %}" class="btn btn-ghost">← Volver</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Último conteo</div>
+    <div class="stat-value" {% if ultimo and ultimo.cantidad == 0 %}style="color:var(--color-danger)"{% endif %}>
+      {{ ultimo.cantidad|default:"—" }}
+    </div>
+    <div class="stat-foot">
+      {% if ultimo %}{{ ultimo.fecha|date:"d/m/Y" }}{% else %}Sin conteos{% endif %}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Consumo semanal</div>
+    <div class="stat-value">{{ huacal.consumo_semanal }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Medidas</div>
+    <div class="stat-value" style="font-size:1.2rem">{{ huacal.medidas|default:"—" }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Conteos registrados</div>
+    <div class="stat-value">{{ conteos|length }}</div>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Capturar conteo</h2>
+    <span class="hint">Si la cantidad es 0 se notifica a los destinatarios. Si ya existe esa fecha, se reemplaza.</span>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="capturar">
+    <div class="field-row">
+      <div class="field">
+        <label for="fecha">Fecha</label>
+        <input type="date" name="fecha" id="fecha" value="{{ hoy }}" required>
+      </div>
+      <div class="field">
+        <label for="cantidad">Cantidad</label>
+        <input type="number" name="cantidad" id="cantidad" min="0" required placeholder="0">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Guardar conteo</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Historial de conteos</h2>
+    <span class="hint">Ordenado de más reciente a más antiguo.</span>
+  </div>
+  {% if conteos %}
+    <div class="table-wrap" style="border:none; box-shadow:none">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th class="num">Cantidad</th>
+            <th>Usuario</th>
+            <th>Registrado</th>
+            <th style="width:1%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in conteos %}
+            <tr>
+              <td><strong>{{ c.fecha|date:"d/m/Y" }}</strong></td>
+              <td class="num {% if c.cantidad == 0 %}zero{% endif %}">{{ c.cantidad }}</td>
+              <td>{{ c.usuario.username|default:"Anónimo" }}</td>
+              <td class="muted">{{ c.creado|date:"d/m/Y H:i" }}</td>
+              <td>
+                <form method="post" style="margin:0">
+                  {% csrf_token %}
+                  <input type="hidden" name="accion" value="eliminar_conteo">
+                  <input type="hidden" name="conteo_pk" value="{{ c.pk }}">
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--color-danger)" onclick="return confirm('¿Eliminar conteo del {{ c.fecha|date:'d/m/Y' }}?')">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">Aún no hay conteos para este huacal.</div>
+  {% endif %}
+</section>
+{% endblock %}

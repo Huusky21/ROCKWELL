@@ -1,0 +1,63 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Detalle del registro · Rockwell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Detalle del registro</h1>
+    <p class="subtitle">Vista consolidada del SO Item con el historial de capturas.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'editar_registro' registro.pk %}" class="btn btn-secondary">Editar</a>
+    <a href="{% url 'registro_eliminar' registro.pk %}" class="btn btn-ghost" style="color:var(--color-danger)">Eliminar</a>
+    <a href="{% url 'registros_listado' %}" class="btn btn-ghost">← Volver</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">SO Item</div>
+    <div class="stat-value" style="font-size:1.2rem; word-break:break-all">{{ registro.so_item }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Cantidad acumulada</div>
+    <div class="stat-value">{{ registro.cantidad }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Entradas registradas</div>
+    <div class="stat-value">{{ entradas|length }}</div>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>Historial de entradas</h2>
+    <span class="hint">Ordenado de más reciente a más antiguo.</span>
+  </div>
+  {% if entradas %}
+    <div class="table-wrap" style="border:none; box-shadow:none">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Fecha y hora</th>
+            <th class="num">Cantidad</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entrada in entradas %}
+            <tr>
+              <td>{{ entrada.creado|date:"d/m/Y H:i:s" }}</td>
+              <td class="num">+{{ entrada.cantidad }}</td>
+              <td>{{ entrada.usuario.username|default:"Anónimo" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No hay entradas registradas para este SO Item.</div>
+  {% endif %}
+</section>
+{% endblock %}

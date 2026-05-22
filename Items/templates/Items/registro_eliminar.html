@@ -1,0 +1,40 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Eliminar registro · Rockwell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Eliminar registro</h1>
+    <p class="subtitle">Esta acción es irreversible y borrará también su historial de entradas.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'registro_detalle' registro.pk %}" class="btn btn-ghost">← Cancelar</a>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>¿Eliminar registro <strong>#{{ registro.id }}</strong>?</h2>
+  </div>
+
+  <div class="alert warning" style="margin-bottom:1rem">
+    Se eliminará el registro y todas sus entradas asociadas ({{ registro.entradas.count }}). Esta acción no se puede deshacer.
+  </div>
+
+  <dl style="display:grid; grid-template-columns:160px 1fr; gap:.4rem .85rem; margin:0">
+    <dt style="font-weight:700">SO Item</dt><dd>{{ registro.so_item }}</dd>
+    <dt style="font-weight:700">Cantidad acumulada</dt><dd>{{ registro.cantidad }}</dd>
+    <dt style="font-weight:700">Usuario</dt><dd>{{ registro.usuario.username|default:"Anónimo" }}</dd>
+    <dt style="font-weight:700">Creado</dt><dd>{{ registro.creado|date:"d/m/Y H:i:s" }}</dd>
+  </dl>
+
+  <form method="post" style="margin-top:1.25rem">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger">Sí, eliminar definitivamente</button>
+      <a href="{% url 'registro_detalle' registro.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

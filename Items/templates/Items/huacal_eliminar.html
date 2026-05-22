@@ -1,0 +1,41 @@
+{% extends "Items/base.html" %}
+
+{% block title %}Eliminar {{ huacal.pn }} · Rockwell{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Eliminar huacal</h1>
+    <p class="subtitle">Esta acción es irreversible y borrará también todos sus conteos.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'huacal_detalle' huacal.pk %}" class="btn btn-ghost">← Cancelar</a>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header">
+    <h2>¿Eliminar <strong>{{ huacal.pn }}</strong>?</h2>
+  </div>
+
+  <div class="alert warning" style="margin-bottom:1rem">
+    Se eliminará el huacal y todos sus conteos asociados ({{ huacal.conteos.count }}). Esta acción no se puede deshacer.
+  </div>
+
+  <dl style="display:grid; grid-template-columns:140px 1fr; gap:.4rem .85rem; margin:0">
+    <dt style="font-weight:700">PN</dt><dd>{{ huacal.pn }}</dd>
+    <dt style="font-weight:700">Descripción</dt><dd>{{ huacal.descripcion|default:"—" }}</dd>
+    <dt style="font-weight:700">Medidas</dt><dd>{{ huacal.medidas|default:"—" }}</dd>
+    <dt style="font-weight:700">Tipo</dt><dd>{{ huacal.get_tipo_display }}</dd>
+    <dt style="font-weight:700">Consumo semanal</dt><dd>{{ huacal.consumo_semanal }}</dd>
+  </dl>
+
+  <form method="post" style="margin-top:1.25rem">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger">Sí, eliminar definitivamente</button>
+      <a href="{% url 'huacal_detalle' huacal.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

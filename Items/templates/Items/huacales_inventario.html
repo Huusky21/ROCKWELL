@@ -9,8 +9,12 @@
     gap: .75rem;
     align-items: end;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 900px) {
     .filters-grid { grid-template-columns: 1fr 1fr; }
+    .filters-grid .btn { grid-column: 1 / -1; }
+  }
+  @media (max-width: 480px) {
+    .filters-grid { grid-template-columns: 1fr; }
   }
   .row-actions { display: flex; gap: .35rem; flex-wrap: nowrap; }
   td.pn-cell { font-weight: 700; }

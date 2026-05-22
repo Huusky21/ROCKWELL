@@ -2,6 +2,40 @@
 
 {% block title %}Nueva captura · Rockwell{% endblock %}
 
+{% block extra_style %}
+  details.collapsible > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: .65rem .9rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-weight: 700;
+    font-size: .92rem;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    transition: background .2s ease, color .2s ease;
+  }
+  details.collapsible > summary:hover { background: #e2e8f0; }
+  details.collapsible > summary::-webkit-details-marker { display: none; }
+  details.collapsible > summary::before {
+    content: '▸';
+    display: inline-block;
+    transition: transform .25s cubic-bezier(.16,1,.3,1);
+    color: var(--color-text-muted);
+    font-size: .8rem;
+  }
+  details.collapsible[open] > summary::before { transform: rotate(90deg); }
+  details.collapsible[open] > summary { background: var(--color-primary-soft); color: var(--color-primary); }
+  details.collapsible[open] > summary::before { color: var(--color-primary); }
+  details.collapsible > .body {
+    padding-top: 1.1rem;
+    animation: slide-down .3s cubic-bezier(.16,1,.3,1) both;
+  }
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div>
@@ -16,6 +50,7 @@
 <section class="card">
   <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="accion" value="capturar">
     <div class="field-row">
       <div class="field">
         <label for="{{ form.so_item.id_for_label }}">SO Item</label>
@@ -32,27 +67,69 @@
         {{ form.cantidad }}
       </div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label for="{{ form.huacal.id_for_label }}">Huacal usado</label>
-        {{ form.huacal }}
-        <div class="hint-text">Pallet o crate al que se asignó este item. Opcional.</div>
-      </div>
-      <div class="field">
-        <label for="{{ form.accesorio.id_for_label }}">Accesorio</label>
-        {{ form.accesorio }}
-        <datalist id="accesorios">
-          {% for a in accesorios %}
-            <option value="{{ a.codigo }}"></option>
-          {% endfor %}
-        </datalist>
-        <div class="hint-text">Si no existe, se crea automáticamente al guardar.</div>
-      </div>
+    <div class="field">
+      <label for="{{ form.huacal.id_for_label }}">Huacal usado</label>
+      {{ form.huacal }}
+      <datalist id="huacales">
+        {% for h in huacales %}
+          <option value="{{ h.pn }}">{{ h.get_tipo_display }} · {{ h.descripcion|default:"—" }} · {{ h.medidas|default:"" }}</option>
+        {% endfor %}
+      </datalist>
+      <div class="hint-text">Escribe un PN o selecciónalo de la lista. Si no aparece, créalo más abajo.</div>
+      {% if form.huacal.errors %}
+        <div class="alert error" style="margin-top:.6rem">{{ form.huacal.errors|join:", " }}</div>
+      {% endif %}
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary">Guardar captura</button>
       <a href="{% url 'registros_listado' %}" class="btn btn-secondary">Cancelar</a>
     </div>
   </form>
+</section>
+
+<section class="card">
+  <details class="collapsible">
+    <summary>¿No encuentras el huacal? Dar de alta uno nuevo</summary>
+    <div class="body">
+      <p class="hint-text" style="margin-top:0">
+        Después de crearlo, regresarás a esta página con el huacal ya seleccionado.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="crear_huacal">
+        <div class="field-row">
+          <div class="field">
+            <label for="pn">PN <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" name="pn" id="pn" required placeholder="PN-XXXXX">
+          </div>
+          <div class="field">
+            <label for="tipo">Tipo</label>
+            <select name="tipo" id="tipo">
+              {% for value, label in tipo_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="descripcion">Descripción</label>
+          <input type="text" name="descripcion" id="descripcion" placeholder="Tarima 5CLs, MCC, etc.">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="medidas">Medidas</label>
+            <input type="text" name="medidas" id="medidas" placeholder='48x48"'>
+          </div>
+          <div class="field">
+            <label for="consumo_semanal">Consumo semanal</label>
+            <input type="number" name="consumo_semanal" id="consumo_semanal" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Crear huacal</button>
+        </div>
+      </form>
+    </div>
+  </details>
 </section>
 {% endblock %}

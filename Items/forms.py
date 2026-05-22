@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Accesorio, Huacal, Registro, SOItem
+from .models import Huacal, Registro, SOItem
 
 
 class SOItemComboboxField(forms.ModelChoiceField):
@@ -24,22 +24,27 @@ class SOItemComboboxField(forms.ModelChoiceField):
                 raise forms.ValidationError(self.error_messages['invalid_choice'], code='invalid_choice')
 
 
-class HuacalSelectField(forms.ModelChoiceField):
+class HuacalComboboxField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         tipo = obj.get_tipo_display().rstrip('s')
         desc = f' — {obj.descripcion}' if obj.descripcion else ''
         return f'{obj.pn} ({tipo}){desc}'
 
-
-class AccesorioAutoCreateField(forms.CharField):
     def to_python(self, value):
-        if not value:
+        if value in self.empty_values:
             return None
-        codigo = str(value).strip()
-        if not codigo:
+        if isinstance(value, Huacal):
+            return value
+        text = str(value).strip()
+        if not text:
             return None
-        accesorio, _ = Accesorio.objects.get_or_create(codigo=codigo)
-        return accesorio
+        pn = text.split(' (', 1)[0].strip()
+        try:
+            return self.queryset.get(pn=pn)
+        except Huacal.DoesNotExist:
+            raise forms.ValidationError(
+                'Huacal no encontrado. Crea uno nuevo desde la sección de abajo.',
+            )
 
 
 class RegistroForm(forms.ModelForm):
@@ -62,17 +67,14 @@ class RegistroForm(forms.ModelForm):
 
 
 class CapturarForm(RegistroForm):
-    huacal = HuacalSelectField(
+    huacal = HuacalComboboxField(
         queryset=Huacal.objects.filter(activo=True).order_by('tipo', 'pn'),
-        required=False,
-        empty_label='— Sin huacal —',
-    )
-    accesorio = AccesorioAutoCreateField(
+        to_field_name='pn',
         required=False,
         widget=forms.TextInput(attrs={
-            'list': 'accesorios',
+            'list': 'huacales',
             'autocomplete': 'off',
-            'placeholder': 'Código del accesorio (se crea si no existe)',
+            'placeholder': 'Selecciona o escribe un PN (ej. PN-48336)',
         }),
     )
 

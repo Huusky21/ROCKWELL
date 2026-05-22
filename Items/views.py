@@ -10,9 +10,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 import openpyxl
 from openpyxl.utils import get_column_letter
 
+from django.urls import reverse
+
 from .forms import CapturarForm, RegistroForm
 from .models import (
-    Accesorio,
     ConteoHuacal,
     DestinatarioAlertaHuacal,
     Entrada,
@@ -73,44 +74,71 @@ def registros_listado(request):
 
 def capturar(request):
     if request.method == 'POST':
+        accion = request.POST.get('accion', 'capturar')
+
+        if accion == 'crear_huacal':
+            pn = (request.POST.get('pn') or '').strip()
+            if not pn:
+                messages.error(request, 'El PN del huacal es obligatorio.')
+                return redirect('capturar')
+            if Huacal.objects.filter(pn=pn).exists():
+                messages.error(request, f'Ya existe un huacal con PN {pn}.')
+                return redirect('capturar')
+            tipo = request.POST.get('tipo') or Huacal.PALLET
+            if tipo not in (Huacal.PALLET, Huacal.CRATE):
+                tipo = Huacal.PALLET
+            try:
+                consumo = int(request.POST.get('consumo_semanal') or 0)
+            except (TypeError, ValueError):
+                consumo = 0
+            nuevo = Huacal.objects.create(
+                pn=pn,
+                descripcion=(request.POST.get('descripcion') or '').strip(),
+                medidas=(request.POST.get('medidas') or '').strip(),
+                consumo_semanal=max(consumo, 0),
+                tipo=tipo,
+            )
+            messages.success(request, f'Huacal {pn} creado y seleccionado.')
+            return redirect(f"{reverse('capturar')}?huacal={nuevo.pk}")
+
         form = CapturarForm(request.POST)
         if form.is_valid():
             so_item = form.cleaned_data['so_item']
             cantidad = form.cleaned_data['cantidad']
             huacal = form.cleaned_data.get('huacal')
-            accesorio = form.cleaned_data.get('accesorio')
             usuario = request.user if request.user.is_authenticated else None
             registro = Registro.objects.filter(so_item=so_item).order_by('-creado').first()
             if registro:
                 registro.cantidad += cantidad
-                if accesorio:
-                    registro.accesorio = accesorio
                 registro.save()
                 Entrada.objects.create(
                     registro=registro,
                     cantidad=cantidad,
                     huacal=huacal,
-                    accesorio=accesorio,
                     usuario=usuario,
                 )
                 messages.success(request, f'Se sumó {cantidad} al registro existente de {so_item}.')
             else:
                 nuevo_registro = form.save(commit=False)
                 nuevo_registro.usuario = usuario
-                if accesorio:
-                    nuevo_registro.accesorio = accesorio
                 nuevo_registro.save()
                 Entrada.objects.create(
                     registro=nuevo_registro,
                     cantidad=cantidad,
                     huacal=huacal,
-                    accesorio=accesorio,
                     usuario=usuario,
                 )
                 messages.success(request, 'Captura guardada correctamente.')
             return redirect('registros_listado')
     else:
-        form = CapturarForm()
+        initial = {}
+        huacal_pk = request.GET.get('huacal')
+        if huacal_pk:
+            try:
+                initial['huacal'] = Huacal.objects.get(pk=int(huacal_pk))
+            except (Huacal.DoesNotExist, ValueError):
+                pass
+        form = CapturarForm(initial=initial)
 
     return render(
         request,
@@ -118,7 +146,8 @@ def capturar(request):
         {
             'form': form,
             'so_items': SOItem.objects.all(),
-            'accesorios': Accesorio.objects.all(),
+            'huacales': Huacal.objects.filter(activo=True).order_by('tipo', 'pn'),
+            'tipo_choices': Huacal.TIPO_CHOICES,
         },
     )
 

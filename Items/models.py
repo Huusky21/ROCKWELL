@@ -53,13 +53,6 @@ class Entrada(models.Model):
         blank=True,
         null=True,
     )
-    accesorio = models.ForeignKey(
-        Accesorio,
-        on_delete=models.SET_NULL,
-        related_name='entradas',
-        blank=True,
-        null=True,
-    )
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     creado = models.DateTimeField(auto_now_add=True)
 

@@ -43,7 +43,6 @@
             <th>Fecha y hora</th>
             <th class="num">Cantidad</th>
             <th>Huacal usado</th>
-            <th>Accesorio</th>
             <th>Usuario</th>
           </tr>
         </thead>
@@ -56,13 +55,6 @@
                 {% if entrada.huacal %}
                   <strong>{{ entrada.huacal.pn }}</strong>
                   <span class="muted">· {{ entrada.huacal.get_tipo_display }}</span>
-                {% else %}
-                  <span class="muted">—</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if entrada.accesorio %}
-                  {{ entrada.accesorio.codigo }}
                 {% else %}
                   <span class="muted">—</span>
                 {% endif %}

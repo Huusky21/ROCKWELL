@@ -1,0 +1,35 @@
+databases:
+  - name: rockwell-db
+    plan: free
+    databaseName: rockwell
+    user: rockwell
+
+services:
+  - type: web
+    name: rockwell
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn rockwell.wsgi:application"
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.2
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: DB_SSL_REQUIRE
+        value: "True"
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rockwell-db
+          property: connectionString
